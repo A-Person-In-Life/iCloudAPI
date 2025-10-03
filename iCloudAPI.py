@@ -2,13 +2,13 @@ from pyicloud import PyiCloudService
 from shutil import copyfileobj
 import os
 
-
 with open("password.txt","r") as f:
     password = str(f.readline)
 api = PyiCloudService("gavin.d.weiner@icloud.com",password)
 
 
-def push(folder_name):
+
+def push(folder_name,api):
 
     folder = api.drive[folder_name]
 
