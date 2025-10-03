@@ -4,7 +4,7 @@ import os
 import sys
 
 
-with open(r"C:\\Python_Projects\\password.txt","r") as f:
+with open("C:\Python_Projects\password.txt","r") as f:
 
     password = str(f.readline)
     print(password)
