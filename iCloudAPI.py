@@ -3,12 +3,15 @@ from shutil import copyfileobj
 import os
 
 with open("password.txt","r") as f:
+
     password = str(f.readline)
-api = PyiCloudService("gavin.d.weiner@icloud.com",password)
+    api = PyiCloudService("gavin.d.weiner@icloud.com",password)
+
+    if api.requires_2fa:
+        print("needs 2fa")
 
 
-
-def push(folder_name,api):
+def push(folder_name):
 
     folder = api.drive[folder_name]
 
@@ -23,6 +26,8 @@ def push(folder_name,api):
 
 def pull(folder_name):
     folder = api.drive[folder_name]
+
+
     pass
 
 push("Test_iCloudAPI")
