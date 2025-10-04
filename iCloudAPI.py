@@ -4,7 +4,7 @@ import sys
 from shutil import copyfileobj
 import hashlib
 
-with open(r"C:\Users\Einstein\Downloads\Password.txt", "r") as f:
+with open(os.path.abspath("password.txt"), "r") as f:
     password = f.readline().strip()
     api = PyiCloudService("gavin.d.weiner@icloud.com", password)
 
@@ -103,7 +103,7 @@ def push(local_folder_path, icloud_folder_node=None):
 
 
 def pull(local_folder_path, icloud_folder_name):
-    icloud_folder = api.drive[icloud_folder_name]
+    icloud_folder = api.drive[os.path.abspath(icloud_folder_name)]
 
     if icloud_folder is not None:
 
@@ -111,19 +111,15 @@ def pull(local_folder_path, icloud_folder_name):
 
         if icloud_folder_contents is not None:
             for entry in icloud_folder_contents:
-                local_file_path = os.path.join(local_folder_path, entry)
-                try:
-                    with open(local_file_path,"rb"):
-                        pass
+                local_file_path = os.path.join(os.path.abspath(local_folder_path), entry)
 
-                except KeyError:
-                    if os.path.isfile(entry):
-                        with open(icloud_folder[entry]):
-                            pass
-                    elif os.path.isdir(entry):
+                if os.path.isfile(entry):
+                    with open(icloud_folder[entry]):
                         pass
-                    else:
-                        print(f"Entry {entry} in iCloud folder {icloud_folder_name} is not a file like object")
+                elif os.path.isdir(entry):
+                        pass
+                else:
+                    print(f"Entry {entry} in iCloud folder {icloud_folder_name} is not a file like object")
         else:
             print(f"No entries found in iCloud folder '{icloud_folder_name}'.")
     else:
@@ -131,4 +127,4 @@ def pull(local_folder_path, icloud_folder_name):
         return
 
 
-pull(r"C:\Users\Einstein\Downloads\iCloud_Test","iCloud_Test")
+push(r"/home/gavin/iCloud_Test")
