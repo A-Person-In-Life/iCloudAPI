@@ -4,10 +4,9 @@ import sys
 from shutil import copyfileobj
 import hashlib
 
-with open(r"C:\Users\gavin\OneDrive\Desktop\Python_Projects\password.txt","r") as f:
-
+with open(r"C:\Users\Einstein\Downloads\Password.txt", "r") as f:
     password = f.readline().strip()
-    api = PyiCloudService("gavin.d.weiner@icloud.com",password)
+    api = PyiCloudService("gavin.d.weiner@icloud.com", password)
 
     if api.requires_2fa:
         print("Two-factor authentication required.")
@@ -25,19 +24,17 @@ with open(r"C:\Users\gavin\OneDrive\Desktop\Python_Projects\password.txt","r") a
             print(f"Session trust result {result}")
 
 
-def hash_file(file_path,hashing_algorithms="MD5"):
+def hash_file(file_path, hashing_algorithms="MD5"):
     hash_function = hashlib.new(hashing_algorithms)
 
-    with open(file_path,"rb"):
-        with open(file_path, 'rb') as file:
+    with open(file_path, "rb"):
+        with open(file_path, "rb") as file:
             while chunk := file.read(8192):
                 hash_function.update(chunk)
     return hash_function.hexdigest()
 
 
-
 def clean_filename(filename):
-
     new_name = filename
     replacements = {
         "ΓÇÖ": "'",
@@ -74,8 +71,12 @@ def push(local_folder_path, icloud_folder_node=None):
         if os.path.isfile(file_path):
             print(f"Entry {entry} is a file, preparing upload.")
             try:
+
                 icloud_file = icloud_folder_node[entry]
-                if os.stat(file_path).st_size == icloud_file.size:
+                local_file_hash = hash_file(file_path)
+                icloud_file_hash = hash_file(icloud_file.name)
+
+                if local_file_hash == icloud_file_hash:
                     print(f"Skipping {entry}, already exists with same size.")
                     continue
                 else:
@@ -102,21 +103,23 @@ def push(local_folder_path, icloud_folder_node=None):
 
 
 def pull(local_folder_path, icloud_folder_name):
-    
     icloud_folder = api.drive[icloud_folder_name]
 
     if icloud_folder is not None:
+
         icloud_folder_contents = icloud_folder.dir()
+
         if icloud_folder_contents is not None:
             for entry in icloud_folder_contents:
-
+                local_file_path = os.path.join(local_folder_path, entry)
                 try:
-                    
-                    local_folder_path[entry]
+                    with open(local_file_path,"rb"):
+                        pass
+
                 except KeyError:
                     if os.path.isfile(entry):
-                        wi
-                        pass
+                        with open(icloud_folder[entry]):
+                            pass
                     elif os.path.isdir(entry):
                         pass
                     else:
@@ -126,8 +129,6 @@ def pull(local_folder_path, icloud_folder_name):
     else:
         print(f"iCloud Folder {icloud_folder_name} does not exist.")
         return
-    
 
 
-push(r"C:\Users\gavin\Downloads\ASMR")
-pull(r"C:\Users\gavin\Downloads\ASMR","ASMR")
+pull(r"C:\Users\Einstein\Downloads\iCloud_Test","iCloud_Test")
