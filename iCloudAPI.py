@@ -102,29 +102,16 @@ def push(local_folder_path, icloud_folder_node=None):
             push(file_path, subfolder_node)
 
 
-def pull(local_folder_path, icloud_folder_name):
-    icloud_folder = api.drive[os.path.abspath(icloud_folder_name)]
-
-    if icloud_folder is not None:
-
-        icloud_folder_contents = icloud_folder.dir()
-
-        if icloud_folder_contents is not None:
-            for entry in icloud_folder_contents:
-                local_file_path = os.path.join(os.path.abspath(local_folder_path), entry)
-
-                if os.path.isfile(entry):
-                    with open(icloud_folder[entry]):
-                        pass
-                elif os.path.isdir(entry):
-                        pass
-                else:
-                    print(f"Entry {entry} in iCloud folder {icloud_folder_name} is not a file like object")
-        else:
-            print(f"No entries found in iCloud folder '{icloud_folder_name}'.")
-    else:
-        print(f"iCloud Folder {icloud_folder_name} does not exist.")
-        return
 
 
-push(r"/home/gavin/iCloud_Test")
+
+            
+                
+                
+
+
+def pull(local_folder_path,icloud_folder_name):
+
+    icloud_folder = api.drive[icloud_folder_name]
+
+push(r"C:\Users\gavin\Downloads\ASMR")
