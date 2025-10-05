@@ -1,11 +1,12 @@
 from pyicloud import PyiCloudService
 import os
 import sys
+from shutil import copyfileobj
+import hashlib
 
-with open(r"C:\Users\gavin\OneDrive\Desktop\Python_Projects\password.txt","r") as f:
-
+with open(os.path.abspath("password.txt"), "r") as f:
     password = f.readline().strip()
-    api = PyiCloudService("gavin.d.weiner@icloud.com",password)
+    api = PyiCloudService("gavin.d.weiner@icloud.com", password)
 
     if api.requires_2fa:
         print("Two-factor authentication required.")
@@ -23,8 +24,17 @@ with open(r"C:\Users\gavin\OneDrive\Desktop\Python_Projects\password.txt","r") a
             print(f"Session trust result {result}")
 
 
-def clean_filename(filename):
+def hash_file(file_path, hashing_algorithms="MD5"):
+    hash_function = hashlib.new(hashing_algorithms)
 
+    with open(file_path, "rb"):
+        with open(file_path, "rb") as file:
+            while chunk := file.read(8192):
+                hash_function.update(chunk)
+    return hash_function.hexdigest()
+
+
+def clean_filename(filename):
     new_name = filename
     replacements = {
         "ΓÇÖ": "'",
@@ -59,9 +69,14 @@ def push(local_folder_path, icloud_folder_node=None):
         file_path = os.path.join(local_folder_path, entry)
 
         if os.path.isfile(file_path):
+            print(f"Entry {entry} is a file, preparing upload.")
             try:
+
                 icloud_file = icloud_folder_node[entry]
-                if os.stat(file_path).st_size == icloud_file.size:
+                local_file_hash = hash_file(file_path)
+                icloud_file_hash = hash_file(icloud_file.name)
+
+                if local_file_hash == icloud_file_hash:
                     print(f"Skipping {entry}, already exists with same size.")
                     continue
                 else:
@@ -75,7 +90,8 @@ def push(local_folder_path, icloud_folder_node=None):
                 icloud_folder_node.upload(f, filename=cleaned_name)
 
         elif os.path.isdir(file_path):
-            print(f"Recursing into subfolder: {entry}")
+
+            print(f"Entry {entry} is a subfolder, starting recursion into: {entry}")
             try:
                 subfolder_node = icloud_folder_node[entry]
                 print(f"Subfolder found: {entry}")
@@ -86,16 +102,29 @@ def push(local_folder_path, icloud_folder_node=None):
             push(file_path, subfolder_node)
 
 
+def pull(local_folder_path, icloud_folder_name):
+    icloud_folder = api.drive[os.path.abspath(icloud_folder_name)]
+
+    if icloud_folder is not None:
+
+        icloud_folder_contents = icloud_folder.dir()
+
+        if icloud_folder_contents is not None:
+            for entry in icloud_folder_contents:
+                local_file_path = os.path.join(os.path.abspath(local_folder_path), entry)
+
+                if os.path.isfile(entry):
+                    with open(icloud_folder[entry]):
+                        pass
+                elif os.path.isdir(entry):
+                        pass
+                else:
+                    print(f"Entry {entry} in iCloud folder {icloud_folder_name} is not a file like object")
+        else:
+            print(f"No entries found in iCloud folder '{icloud_folder_name}'.")
+    else:
+        print(f"iCloud Folder {icloud_folder_name} does not exist.")
+        return
 
 
-
-            
-                
-                
-
-
-def pull(local_folder_path,icloud_folder_name):
-
-    icloud_folder = api.drive[icloud_folder_name]
-
-push(r"C:\Users\gavin\Downloads\ASMR")
+push(r"/home/gavin/iCloud_Test")
