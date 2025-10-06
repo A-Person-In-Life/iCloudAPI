@@ -83,8 +83,7 @@ def push(local_folder_path, icloud_folder=None):
             try:
                 subfolder_node = icloud_folder[entry]
             except KeyError:
-                icloud_folder.mkdir(entry)
-                subfolder_node = icloud_folder[entry]
+                print("subfolder doesn't exist, please make it in icloud")
 
             push(file_path, subfolder_node)
 
