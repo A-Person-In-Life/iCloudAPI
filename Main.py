@@ -54,6 +54,8 @@ def push(local_folder_path, icloud_folder=None):
             try:
                 icloud_file = icloud_folder[entry]
                 if not hash_check(file_path, icloud_file):
+                    print(f"File {entry} within folder {os.path.basename(local_folder_path)} already exists in iCloud")
+                    print("Skipping upload")
                     continue
                 else:
                     icloud_file.delete()
