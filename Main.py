@@ -5,8 +5,6 @@ import sys
 from shutil import copyfileobj
 import hashlib
 import tempfile
-from tqdm import tqdm
-
 
 def hash_file(file_path, algorithm="md5"):
     #copied from geeks for geeks
