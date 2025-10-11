@@ -5,6 +5,10 @@ import sys
 from shutil import copyfileobj
 import hashlib
 import tempfile
+import json
+from msal import PublicClientApplication, SerializableTokenCache
+import webbrowser
+
 
 def hash_file(file_path, algorithm="md5"):
     #copied from geeks for geeks
@@ -33,7 +37,7 @@ def hash_check(local_path, icloud_file):
 def push(local_folder_path, icloud_folder=None):
 
     if not os.path.exists(local_folder_path):
-        print("file doesn't exist")
+        print("Folder doesn't exist, creating it")
         return
 
     if icloud_folder is None:
@@ -53,7 +57,7 @@ def push(local_folder_path, icloud_folder=None):
                 icloud_file = icloud_folder[entry]
                 if not hash_check(file_path, icloud_file):
                     print(f"File {entry} within folder {os.path.basename(local_folder_path)} already exists in iCloud")
-                    print("Skipping upload")
+                    print(f"Skipping upload of file {entry} within folder {os.path.basename(local_folder_path)}")
                     continue
                 else:
                     icloud_file.delete()
@@ -98,6 +102,8 @@ def pull(local_folder_path, icloud_folder):
             should_download = True
             if os.path.exists(local_path):
                 should_download = hash_check(local_path, item)
+            else:
+                print(f"Skipping file {entry} within folder {icloud_folder.name}")
             
             if should_download:
                 download = item.open(stream=True)
@@ -116,8 +122,25 @@ def sync(local_folder_path,icloud_folder_name):
 
 
 def interface():
-    local_folder_path = input("Enter the path for the local folder to send and receive from: ").strip()
-    icloud_folder_name = input("Enter the name of the iCloud folder to send and receive from: ").strip()
+
+    paths = "paths.txt"
+    change_paths_icloud = input("Do you want to change paths for the local, iCloud and OneDrive folders?: ").strip().lower()
+    true_keywords = ["yes", "y", "true"]
+
+
+    if change_paths_icloud in true_keywords:
+        local_folder_path = str(input("Enter the path for the local folder to send and receive from: ").strip())
+        icloud_folder_name = str(input("Enter the name of the iCloud folder to send and receive from: ").strip())
+        onedrive_folder_name = str(input("Enter the name of the OneDrive folder to send and receive from:").strip())
+
+        with open(paths, "w") as f:
+            f.write(local_folder_path + "\n")
+            f.write(icloud_folder_name + "\n")
+            f.write(onedrive_folder_name + "\n")
+    
+    with open(paths,"r") as f:
+        local_folder_path = f.readline().strip()
+        icloud_folder_name = f.readline().strip()
     
     if not local_folder_path or not icloud_folder_name:
         print("Both paths must be provided.")
@@ -127,9 +150,15 @@ def interface():
 
 if __name__ == "__main__":
 
-    with open(r"C:\Users\gavin\OneDrive\Desktop\Python_Projects\password.txt", "r") as f:
+    base_dir = "/home/gavin/downloads/icloud_api_config/"
+    icloud_auth = os.path.join(base_dir, "icloud_auth.txt")
+    onedrive_auth = os.path.join(base_dir, "onedrive_auth.txt")
+    onedrive_auth_cache = os.path.join(base_dir, "onedrive_auth_cache.json")
+
+    with open(icloud_auth, "r") as f:
         password = f.readline().strip()
-        api = PyiCloudService("gavin.d.weiner@icloud.com", password)
+        username = f.readline().strip()
+        api = PyiCloudService(username,password)
 
     if api.requires_2fa:
         print("Two-factor authentication required.")
@@ -145,5 +174,40 @@ if __name__ == "__main__":
             print("Session is not trusted. Requesting trust...")
             result = api.trust_session()
             print(f"Session trust result {result}")
+
+    with open(onedrive_auth, "r") as f:
+        client_id = f.readline().strip()
+        tenant_id = f.readline().strip()
+        scopes = f.readline().strip().split(",")
+
+    authority = f"https://login.microsoftonline.com/{tenant_id}"
+    app = PublicClientApplication(client_id=client_id, authority=authority)
+
+    token_cache = SerializableTokenCache()
+    if os.path.exists(onedrive_auth_cache):
+        with open(onedrive_auth_cache, "r") as f:
+            token_cache.deserialize(f.read())
+
+    accounts = app.get_accounts()
+    if accounts:
+        result = app.acquire_token_silent(scopes, account=accounts[0])
+    else:
+        access_token = app.initiate_device_flow(scopes=scopes)
+        if "error" in access_token:
+            raise ValueError(f"Device flow error: {access_token['error_description']}")
+        print(access_token["message"])
+        webbrowser.open(access_token["verification_uri"])
+        result = app.acquire_token_by_device_flow(access_token)
+
+    if "access_token" in result:
+        print("Access token acquired!")
+        print(result["access_token"][:100] + "...")
+    else:
+        print("Error acquiring token:", result.get("error_description"))
+
+    if token_cache.has_state_changed:
+        with open(onedrive_auth_cache, "w") as f:
+            f.write(token_cache.serialize())
+
 
     interface()
